@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { ArrowLeft, RefreshCw, Globe, Settings, Link2 } from 'lucide-react';
@@ -14,6 +14,54 @@ import Navbar from '@/app/components/LandingPage/Navbar';
 
 import { usePortfolioOneStore } from '../../../../../store/portfolioOneStore';
 import { useAuthStore } from '../../../../../store/useAuthStore';
+
+// Error boundary component for React Query errors
+class QueryErrorBoundary extends React.Component {
+  constructor(props: any) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error: any) {
+    // Update state so the next render will show the fallback UI
+    if (error.message?.includes('QueryClient')) {
+      return { hasError: true };
+    }
+    return null;
+  }
+
+  componentDidCatch(error: any, errorInfo: any) {
+    console.error('QueryClient Error:', error, errorInfo);
+  }
+
+  render() {
+    if ((this.state as any).hasError) {
+      return (
+        <Card className="border-red-200 dark:border-red-800">
+          <CardHeader>
+            <CardTitle className="text-red-600 dark:text-red-400">
+              Error Loading Slug Manager
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">
+              There was an issue loading the slug management interface. Please refresh the page.
+            </p>
+            <Button 
+              onClick={() => window.location.reload()} 
+              variant="outline"
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh Page
+            </Button>
+          </CardContent>
+        </Card>
+      );
+    }
+
+    return (this.props as any).children;
+  }
+}
 
 // Dynamically import SlugManager to ensure QueryClient is available
 const SlugManager = dynamic(
@@ -252,7 +300,6 @@ function SlugManagementPageContent() {
             </div>
           </motion.div>
 
-          {/* Portfolio Info */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -291,22 +338,46 @@ function SlugManagementPageContent() {
             </Card>
           </motion.div>
 
-          {/* Slug Manager */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
-            <SlugManager
-              portfolioId={currentPortfolio._id || currentPortfolio.id}
-              portfolioName={
-                currentPortfolio.personalInfo?.fullName || 
-                currentPortfolio.brandName || 
-                currentPortfolio.title ||
-                'Portfolio'
-              }
-              className="mb-8"
-            />
+            <QueryErrorBoundary>
+              <Suspense 
+                fallback={
+                  <Card className="border-purple-200 dark:border-purple-800">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-white">
+                        <RefreshCw className="h-5 w-5 animate-spin text-purple-400" />
+                        Loading Slug Manager...
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        {[...Array(3)].map((_, i) => (
+                          <div
+                            key={i}
+                            className="h-12 bg-gradient-to-r from-purple-200 to-blue-200 dark:from-purple-800 dark:to-blue-800 rounded-lg animate-pulse"
+                          />
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                }
+              >
+                <SlugManager
+                  portfolioId={currentPortfolio._id || currentPortfolio.id}
+                  portfolioName={
+                    currentPortfolio.personalInfo?.fullName || 
+                    currentPortfolio.brandName || 
+                    currentPortfolio.title ||
+                    'Portfolio'
+                  }
+                  className="mb-8"
+                />
+              </Suspense>
+            </QueryErrorBoundary>
           </motion.div>
 
           {/* Additional Info */}

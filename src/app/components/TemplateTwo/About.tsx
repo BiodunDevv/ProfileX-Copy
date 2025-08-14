@@ -5,7 +5,7 @@ import { StaticImageData } from "next/image";
 
 interface Skill {
   name: string;
-  level: number; // 1-100
+  level: number; 
 }
 
 interface Education {
@@ -71,7 +71,6 @@ const About: React.FC<AboutProps> = ({
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#161513] to-transparent opacity-40"></div>
               </div>
-              {/* Decorative elements */}
               <div className="absolute -bottom-4 -left-4 w-20 h-20 border-2 border-amber-500/20 rounded-lg z-[-1]"></div>
               <div className="absolute -top-4 -right-4 w-20 h-20 border-2 border-amber-500/20 rounded-lg z-[-1]"></div>
             </div>
@@ -112,7 +111,6 @@ const About: React.FC<AboutProps> = ({
           </div>
         </div>
 
-        {/* Experience & Education */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
           {/* Experience */}
           {experience.length > 0 && (
@@ -147,7 +145,6 @@ const About: React.FC<AboutProps> = ({
             </div>
           )}
 
-          {/* Education */}
           {education.length > 0 && (
             <div className="bg-[#0f0f12]/80 p-8 rounded-lg border border-amber-500/10 backdrop-blur-sm shadow-lg shadow-amber-500/5">
               <div className="flex items-center mb-6">

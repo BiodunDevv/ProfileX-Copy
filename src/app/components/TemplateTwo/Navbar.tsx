@@ -54,7 +54,6 @@ const Navbar = ({ DevName }: NavbarProps) => {
           />
         </motion.div>
 
-        {/* Desktop Navigation */}
         <div className="hidden md:block">
           <ul className="flex items-center space-x-8">
             {navItems.map((item, index) => (
@@ -99,7 +98,6 @@ const Navbar = ({ DevName }: NavbarProps) => {
           </ul>
         </div>
 
-        {/* Mobile Menu Toggle */}
         <motion.div
           className="md:hidden"
           initial={{ opacity: 0 }}
@@ -119,7 +117,6 @@ const Navbar = ({ DevName }: NavbarProps) => {
         </motion.div>
       </nav>
 
-      {/* Mobile Navigation Menu */}
       <motion.div
         className="md:hidden absolute top-full left-0 right-0 bg-[#161513]/95 backdrop-blur-md shadow-lg border-t border-amber-500/20"
         initial={{ height: 0, opacity: 0 }}
