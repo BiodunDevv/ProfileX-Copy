@@ -25,12 +25,53 @@ export default function AuthProvider({
 }) {
   const [isLoading, setIsLoading] = useState(true);
   const [authChecked, setAuthChecked] = useState(false);
+  const [storeHydrated, setStoreHydrated] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
 
-  // Get auth state directly from store
-  const authState = useAuthStore();
-  const { isAuthenticated, user, token, checkAuthState, signIn } = authState;
+  // Ensure we're mounted on client
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const user = useAuthStore((state) => state.user);
+  const token = useAuthStore((state) => state.token);
+  const checkAuthState = useAuthStore((state) => state.checkAuthState);
+
+  // Wait for Zustand store to hydrate
+  useEffect(() => {
+    if (!mounted) return;
+
+    // Check if store has already hydrated
+    const hasHydrated = useAuthStore.persist.hasHydrated();
+    if (hasHydrated) {
+      console.log('🔄 Store already hydrated');
+      setStoreHydrated(true);
+      return;
+    }
+
+    const unsubscribe = useAuthStore.persist.onFinishHydration(() => {
+      console.log('🔄 Store hydration completed');
+      setStoreHydrated(true);
+    });
+
+    return unsubscribe;
+  }, [mounted]);
+
+  // Debug effect to monitor store state changes
+  useEffect(() => {
+    if (mounted && storeHydrated) {
+      console.log('🔍 Store state after hydration:', {
+        hasToken: !!token,
+        tokenLength: token?.length || 0,
+        isAuthenticated,
+        hasUser: !!user,
+        userName: user?.name
+      });
+    }
+  }, [token, isAuthenticated, user, mounted, storeHydrated]);
 
   // Listen for token changes (but not on initial load)
   useEffect(() => {
@@ -80,8 +121,13 @@ export default function AuthProvider({
   const templateInfoRoutes = ["/templates"]; // Allow template info pages for unauthenticated users
   const verificationRoutes = ["/verification"];
 
-    // Initialize auth check
+  // Initialize auth check - wait for store hydration and mounting
   useEffect(() => {
+    if (!mounted || !storeHydrated) {
+      console.log('⏳ Waiting for mount and store hydration...', { mounted, storeHydrated });
+      return;
+    }
+
     const initAuth = async () => {
       console.log('🔄 AuthProvider: Initializing auth check...');
       console.log('🔍 Initial auth state:', { 
@@ -94,7 +140,10 @@ export default function AuthProvider({
       try {
         if (token) {
           console.log('✅ Token found, calling checkAuthState');
-          await checkAuthState();
+          const isValid = await checkAuthState();
+          console.log('🔍 Auth check result:', isValid);
+          setIsLoading(false);
+          setAuthChecked(true);
         } else {
           console.log('❌ No token found - setting auth as checked for public access');
           // No token means user is not authenticated, but we should still allow public routes
@@ -110,11 +159,11 @@ export default function AuthProvider({
     };
 
     initAuth();
-  }, []); // Only run once on mount
+  }, [mounted, storeHydrated, token, checkAuthState, pathname]); // Wait for mounting, hydration and react to token changes
 
-  // Handle redirects after auth is checked
+  // Handle redirects after auth is checked and store is hydrated
   useEffect(() => {
-    if (!authChecked || isLoading) return;
+    if (!mounted || !storeHydrated || !authChecked || isLoading) return;
 
     // Small delay to prevent race conditions
     const timeoutId = setTimeout(() => {
@@ -162,6 +211,8 @@ export default function AuthProvider({
 
     return () => clearTimeout(timeoutId);
   }, [
+    mounted,
+    storeHydrated,
     authChecked,
     isLoading,
     isAuthenticated,
@@ -173,13 +224,15 @@ export default function AuthProvider({
     publicRoutes,
   ]);
 
-  // Show loading screen during initialization
-  if (!authChecked || isLoading) {
+  // Show loading screen during initialization or while store is hydrating
+  if (!mounted || !storeHydrated || !authChecked || isLoading) {
     return (
       <div className="fixed inset-0 bg-gradient-to-br from-[#17181E] via-[#1F2029] to-[#2A2D3A] flex items-center justify-center z-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto mb-4"></div>
-          <p className="text-white text-lg">Checking authentication...</p>
+          <p className="text-white text-lg">
+            {!mounted || !storeHydrated ? 'Loading app...' : 'Checking authentication...'}
+          </p>
         </div>
       </div>
     );

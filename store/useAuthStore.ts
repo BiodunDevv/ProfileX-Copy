@@ -573,6 +573,12 @@ export const useAuthStore = create<AuthState>()(
         lastLogin: state.lastLogin,
       }),
       storage: createSafeStorage(),
+      // Add SSR support
+      onRehydrateStorage: () => (state) => {
+        console.log('🔄 Store rehydration started:', state);
+      },
+      // Skip hydration on server side
+      skipHydration: !isClient,
     }
   )
 );
