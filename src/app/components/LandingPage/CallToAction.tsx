@@ -18,7 +18,6 @@ const CallToAction = () => {
   const { isAuthenticated, user } = useAuthStore();
   const [isButtonHovered, setIsButtonHovered] = useState(false);
 
-  // Function to handle CTA button click based on auth state
   const handleCTAClick = () => {
     if (isAuthenticated) {
       router.push("/dashboard");
