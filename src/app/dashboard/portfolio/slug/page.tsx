@@ -300,7 +300,6 @@ function SlugManagementPageContent() {
             </div>
           </motion.div>
 
-          {/* Portfolio Info */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -339,7 +338,6 @@ function SlugManagementPageContent() {
             </Card>
           </motion.div>
 
-          {/* Slug Manager */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
