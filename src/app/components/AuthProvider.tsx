@@ -32,8 +32,11 @@ export default function AuthProvider({
   const authState = useAuthStore();
   const { isAuthenticated, user, token, checkAuthState, signIn } = authState;
 
-  // Listen for token changes
+  // Listen for token changes (but not on initial load)
   useEffect(() => {
+    // Skip if auth hasn't been checked yet (initial load)
+    if (!authChecked) return;
+
     console.log("🔄 AuthProvider: Token state updated", {
       hasToken: !!token,
       isAuthenticated: isAuthenticated,
@@ -41,26 +44,19 @@ export default function AuthProvider({
 
     // If we have a token but not authenticated, validate the token
     if (token && !isAuthenticated) {
+      setIsLoading(true);
       checkAuthState()
         .then((isValid) => {
           if (isValid) {
             setIsLoading(false);
-            setAuthChecked(true);
           }
         })
         .catch((error) => {
           console.error("❌ Token validation error:", error);
           setIsLoading(false);
-          setAuthChecked(true);
         });
     }
-
-    // If we don't have a token but we're marked as authenticated, fix the state
-    if (!token && isAuthenticated) {
-      setIsLoading(false);
-      setAuthChecked(true);
-    }
-  }, [token, isAuthenticated, checkAuthState]);
+  }, [token, isAuthenticated, checkAuthState, authChecked]);
 
   // Define routes
   const publicRoutes = [
@@ -70,6 +66,9 @@ export default function AuthProvider({
     "/verification",
     "/forgotpassword",
     "/reset-password",
+    "/templates",
+    "/portfolio",  // Allow portfolio access to unauthenticated users
+    "/allTemplates", // Allow template previews
   ];
   const authRoutes = [
     "/signin",
@@ -81,32 +80,32 @@ export default function AuthProvider({
   const templateInfoRoutes = ["/templates"]; // Allow template info pages for unauthenticated users
   const verificationRoutes = ["/verification"];
 
-  // Initialize auth check
+    // Initialize auth check
   useEffect(() => {
     const initAuth = async () => {
-      console.log("🔄 AuthProvider: Initializing auth check...");
-      console.log("🔍 Initial auth state:", {
-        hasToken: !!token,
-        isAuthenticated,
-        hasUser: !!user,
-        pathname,
+      console.log('🔄 AuthProvider: Initializing auth check...');
+      console.log('🔍 Initial auth state:', { 
+        hasToken: !!token, 
+        isAuthenticated, 
+        hasUser: !!user, 
+        pathname 
       });
 
       try {
-        // Only check auth state if we have a token
         if (token) {
-          const isValid = await checkAuthState();
-          console.log("🔍 Auth check result:", isValid);
+          console.log('✅ Token found, calling checkAuthState');
+          await checkAuthState();
         } else {
-          console.log("❌ No token found");
+          console.log('❌ No token found - setting auth as checked for public access');
+          // No token means user is not authenticated, but we should still allow public routes
+          setIsLoading(false);
+          setAuthChecked(true);
         }
-
-        setAuthChecked(true);
-        setIsLoading(false);
       } catch (error) {
-        console.error("❌ Auth initialization error:", error);
-        setAuthChecked(true);
+        console.error('❌ Auth initialization error:', error);
+        // On error, still mark auth as checked to prevent infinite loading
         setIsLoading(false);
+        setAuthChecked(true);
       }
     };
 
@@ -147,6 +146,11 @@ export default function AuthProvider({
 
         // Allow unauthenticated users to preview actual templates
         if (pathname.startsWith("/allTemplates/")) {
+          return;
+        }
+
+        // Allow unauthenticated users to view portfolios
+        if (pathname.startsWith("/portfolio/")) {
           return;
         }
 

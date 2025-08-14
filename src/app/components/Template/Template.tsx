@@ -17,6 +17,7 @@ import {
   LayoutTemplate,
   ExternalLink,
   CheckCircle,
+  Rocket,
 } from "lucide-react";
 import { useAuthStore } from "../../../../store/useAuthStore";
 
@@ -717,6 +718,23 @@ const Templates = () => {
 
                       {/* Template footer */}
                       <div className="p-2.5 sm:p-3 pt-0">
+                        {/* Primary Action - Use Template */}
+                        {template.available && !template.isPreviewOnly && !hasPortfolio && (
+                          <div className="mb-2">
+                            <Link
+                              href={
+                                template.id === 'templateOne' 
+                                  ? '/dashboard/create-portfolio'
+                                  : `/templateForm?${template.id}`
+                              }
+                              className="w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg transition-all duration-300 flex items-center justify-center gap-2 text-xs sm:text-sm font-medium shadow-md hover:shadow-lg"
+                            >
+                              <Rocket className="w-3 h-3 sm:w-4 sm:h-4" />
+                              <span>Use Template</span>
+                            </Link>
+                          </div>
+                        )}
+
                         {/* Hover overlay with actions */}
                         <div className="relative">
                           {/* Secondary Actions */}
