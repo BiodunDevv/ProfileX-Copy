@@ -103,6 +103,7 @@ const TemplateOne: React.FC<TemplateOneProps> = ({
         email={defaultData.contact.email}
         phone={defaultData.contact.phone}
         socialLinks={defaultData.contact.socialLinks}
+        portfolioId={portfolioData?._id}
       />
     </motion.div>
   );

@@ -68,6 +68,7 @@ interface PortfolioData {
   theme: string;
   isPublic: boolean;
   customUrl?: string;
+  slug?: string;
   isPasswordProtected?: boolean;
   password?: string;
   createdAt?: string;
@@ -85,13 +86,13 @@ interface PortfolioOneState {
     data: Omit<PortfolioData, "_id" | "createdAt" | "updatedAt">
   ) => Promise<PortfolioData | null>;
   getMyPortfolio: () => Promise<PortfolioData | null>;
-  getPortfolioById: (id: string) => Promise<PortfolioData | null>;
-  getPortfolioInfo: (id: string, portfolioType?: string) => Promise<any>;
+  getPortfolioById: (identifier: string) => Promise<PortfolioData | null>;
+  getPortfolioInfo: (identifier: string, portfolioType?: string) => Promise<any>;
   updatePortfolio: (
-    id: string,
+    identifier: string,
     data: Partial<PortfolioData>
   ) => Promise<PortfolioData | null>;
-  deletePortfolio: (id: string) => Promise<boolean>;
+  deletePortfolio: (identifier: string) => Promise<boolean>;
   createCustomLink: (portfolioId: string, linkData: any) => Promise<any>;
   createPasswordProtectedLink: (
     portfolioId: string,
@@ -167,7 +168,7 @@ export const usePortfolioOneStore = create<PortfolioOneState>((set, get) => ({
       }
 
       const response = await fetch(
-        `${API_BASE_URL}/portfolio1/me/my-portfolio`,
+        `/api/portfolio1/me/my-portfolio`,
         {
           method: "GET",
           headers: {
@@ -190,8 +191,20 @@ export const usePortfolioOneStore = create<PortfolioOneState>((set, get) => ({
       const result = await response.json();
       console.log("Portfolio fetched successfully:", result);
 
-      set({ portfolio: result, isLoading: false });
-      return result;
+      // Handle nested response structure from backend
+      let portfolioData = result;
+      if (result.success && result.data) {
+        // If response has success/data structure, extract the portfolio
+        portfolioData = result.data.portfolio || result.data;
+      } else if (result.data && result.data.portfolio) {
+        // Alternative nested structure
+        portfolioData = result.data.portfolio;
+      }
+
+      console.log("Extracted portfolio data:", portfolioData);
+
+      set({ portfolio: portfolioData, isLoading: false });
+      return portfolioData;
     } catch (error: any) {
       console.error("Error fetching portfolio:", error);
       set({ error: error.message, isLoading: false });
@@ -199,7 +212,7 @@ export const usePortfolioOneStore = create<PortfolioOneState>((set, get) => ({
     }
   },
 
-  getPortfolioById: async (id) => {
+  getPortfolioById: async (identifier) => {
     set({ isLoading: true, error: null });
 
     try {
@@ -210,7 +223,7 @@ export const usePortfolioOneStore = create<PortfolioOneState>((set, get) => ({
         throw new Error("Authentication required");
       }
 
-      const response = await fetch(`${API_BASE_URL}/portfolio1/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/portfolio1/${identifier}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -235,7 +248,7 @@ export const usePortfolioOneStore = create<PortfolioOneState>((set, get) => ({
     }
   },
 
-  getPortfolioInfo: async (id, portfolioType = "template1") => {
+  getPortfolioInfo: async (identifier, portfolioType = "template1") => {
     set({ isLoading: true, error: null });
 
     try {
@@ -249,12 +262,12 @@ export const usePortfolioOneStore = create<PortfolioOneState>((set, get) => ({
       // Determine the correct endpoint based on portfolio type
       let endpoint = "";
       if (portfolioType === "template1") {
-        endpoint = `${API_BASE_URL}/portfolio1/${id}/info`;
+        endpoint = `${API_BASE_URL}/portfolio1/${identifier}/info`;
       } else if (portfolioType === "template2") {
-        endpoint = `${API_BASE_URL}/portfolio2/${id}/info`;
+        endpoint = `${API_BASE_URL}/portfolio2/${identifier}/info`;
       } else {
         // Fallback to portfolio1 for unknown types
-        endpoint = `${API_BASE_URL}/portfolio1/${id}/info`;
+        endpoint = `${API_BASE_URL}/portfolio1/${identifier}/info`;
       }
 
       const response = await fetch(endpoint, {
@@ -282,7 +295,7 @@ export const usePortfolioOneStore = create<PortfolioOneState>((set, get) => ({
     }
   },
 
-  updatePortfolio: async (id, data) => {
+  updatePortfolio: async (identifier, data) => {
     set({ isLoading: true, error: null });
 
     try {
@@ -293,10 +306,10 @@ export const usePortfolioOneStore = create<PortfolioOneState>((set, get) => ({
         throw new Error("Authentication required");
       }
 
-      console.log("Updating portfolio with ID:", id, "Data:", data);
+      console.log("Updating portfolio with identifier:", identifier, "Data:", data);
 
       // Use the data as-is since it's already in the correct API format
-      const response = await fetch(`${API_BASE_URL}/portfolio1/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/portfolio1/${identifier}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -322,7 +335,7 @@ export const usePortfolioOneStore = create<PortfolioOneState>((set, get) => ({
     }
   },
 
-  deletePortfolio: async (id) => {
+  deletePortfolio: async (identifier) => {
     set({ isLoading: true, error: null });
 
     try {
@@ -333,9 +346,9 @@ export const usePortfolioOneStore = create<PortfolioOneState>((set, get) => ({
         throw new Error("Authentication required");
       }
 
-      console.log("Deleting portfolio with ID:", id);
+      console.log("Deleting portfolio with identifier:", identifier);
 
-      const response = await fetch(`${API_BASE_URL}/portfolio1/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/portfolio1/${identifier}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",

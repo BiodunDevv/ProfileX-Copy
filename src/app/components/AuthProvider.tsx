@@ -25,79 +25,53 @@ export default function AuthProvider({
 }) {
   const [isLoading, setIsLoading] = useState(true);
   const [authChecked, setAuthChecked] = useState(false);
-  const [storeHydrated, setStoreHydrated] = useState(false);
-  const [mounted, setMounted] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
 
-  // Ensure we're mounted on client
+  // Get auth state directly from store with proper destructuring
+  const { 
+    isAuthenticated, 
+    user, 
+    token, 
+    checkAuthState, 
+    signIn,
+    isLoading: storeLoading 
+  } = useAuthStore();
+
+  console.log("🔍 AuthProvider: Current token from store:", {
+    hasToken: !!token,
+    tokenLength: token ? token.length : 0,
+    isAuthenticated,
+    hasUser: !!user,
+    storeLoading
+  });
+
+  // Listen for token changes and validate if needed
   useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const user = useAuthStore((state) => state.user);
-  const token = useAuthStore((state) => state.token);
-  const checkAuthState = useAuthStore((state) => state.checkAuthState);
-
-  // Wait for Zustand store to hydrate
-  useEffect(() => {
-    if (!mounted) return;
-
-    // Check if store has already hydrated
-    const hasHydrated = useAuthStore.persist.hasHydrated();
-    if (hasHydrated) {
-      console.log('🔄 Store already hydrated');
-      setStoreHydrated(true);
-      return;
-    }
-
-    const unsubscribe = useAuthStore.persist.onFinishHydration(() => {
-      console.log('🔄 Store hydration completed');
-      setStoreHydrated(true);
-    });
-
-    return unsubscribe;
-  }, [mounted]);
-
-  // Debug effect to monitor store state changes
-  useEffect(() => {
-    if (mounted && storeHydrated) {
-      console.log('🔍 Store state after hydration:', {
-        hasToken: !!token,
-        tokenLength: token?.length || 0,
-        isAuthenticated,
-        hasUser: !!user,
-        userName: user?.name
-      });
-    }
-  }, [token, isAuthenticated, user, mounted, storeHydrated]);
-
-  // Listen for token changes (but not on initial load)
-  useEffect(() => {
-    // Skip if auth hasn't been checked yet (initial load)
-    if (!authChecked) return;
+    // Skip if auth hasn't been checked yet (initial load) or already loading
+    if (!authChecked || isLoading) return;
 
     console.log("🔄 AuthProvider: Token state updated", {
       hasToken: !!token,
       isAuthenticated: isAuthenticated,
+      hasUser: !!user,
     });
 
-    // If we have a token but not authenticated, validate the token
-    if (token && !isAuthenticated) {
+    // If we have a token but not fully authenticated, validate the token
+    if (token && (!isAuthenticated || !user)) {
+      console.log("🔍 Validating existing token...");
       setIsLoading(true);
       checkAuthState()
         .then((isValid) => {
-          if (isValid) {
-            setIsLoading(false);
-          }
+          console.log("✅ Token validation result:", isValid);
+          setIsLoading(false);
         })
         .catch((error) => {
           console.error("❌ Token validation error:", error);
           setIsLoading(false);
         });
     }
-  }, [token, isAuthenticated, checkAuthState, authChecked]);
+  }, [token, isAuthenticated, user, checkAuthState, authChecked, isLoading]);
 
   // Define routes
   const publicRoutes = [
@@ -108,8 +82,7 @@ export default function AuthProvider({
     "/forgotpassword",
     "/reset-password",
     "/templates",
-    "/portfolio",  // Allow portfolio access to unauthenticated users
-    "/allTemplates", // Allow template previews
+    "/portfolio", // Allow portfolio access
   ];
   const authRoutes = [
     "/signin",
@@ -121,49 +94,55 @@ export default function AuthProvider({
   const templateInfoRoutes = ["/templates"]; // Allow template info pages for unauthenticated users
   const verificationRoutes = ["/verification"];
 
-  // Initialize auth check - wait for store hydration and mounting
+  // Initialize auth check
   useEffect(() => {
-    if (!mounted || !storeHydrated) {
-      console.log('⏳ Waiting for mount and store hydration...', { mounted, storeHydrated });
-      return;
-    }
-
     const initAuth = async () => {
-      console.log('🔄 AuthProvider: Initializing auth check...');
-      console.log('🔍 Initial auth state:', { 
-        hasToken: !!token, 
-        isAuthenticated, 
-        hasUser: !!user, 
-        pathname 
+      console.log("🔄 AuthProvider: Initializing auth check...");
+      console.log("🔍 Initial auth state:", {
+        hasToken: !!token,
+        isAuthenticated,
+        hasUser: !!user,
+        pathname,
       });
 
       try {
+        // Only check auth state if we have a token
         if (token) {
-          console.log('✅ Token found, calling checkAuthState');
+          console.log("🔍 Token found, validating...", { 
+            tokenPreview: token.substring(0, 20) + "...",
+            tokenLength: token.length 
+          });
           const isValid = await checkAuthState();
-          console.log('🔍 Auth check result:', isValid);
-          setIsLoading(false);
-          setAuthChecked(true);
+          console.log("🔍 Auth check result:", isValid);
+          
+          if (!isValid) {
+            console.log("❌ Token invalid, clearing auth state");
+            // Token is invalid, auth store should have cleared it
+          } else {
+            console.log("✅ Token is valid, user authenticated");
+          }
         } else {
-          console.log('❌ No token found - setting auth as checked for public access');
-          // No token means user is not authenticated, but we should still allow public routes
-          setIsLoading(false);
-          setAuthChecked(true);
+          console.log("ℹ️ No token found - user needs to authenticate");
         }
       } catch (error) {
-        console.error('❌ Auth initialization error:', error);
-        // On error, still mark auth as checked to prevent infinite loading
-        setIsLoading(false);
+        console.error("❌ Auth initialization error:", error);
+      } finally {
+        // Always set these to complete the auth check
+        console.log("✅ Auth initialization complete");
         setAuthChecked(true);
+        setIsLoading(false);
       }
     };
 
-    initAuth();
-  }, [mounted, storeHydrated, token, checkAuthState, pathname]); // Wait for mounting, hydration and react to token changes
+    // Only run if we haven't checked auth yet
+    if (!authChecked) {
+      initAuth();
+    }
+  }, [token, checkAuthState, authChecked, isAuthenticated, user, pathname]);
 
-  // Handle redirects after auth is checked and store is hydrated
+  // Handle redirects after auth is checked
   useEffect(() => {
-    if (!mounted || !storeHydrated || !authChecked || isLoading) return;
+    if (!authChecked || isLoading) return;
 
     // Small delay to prevent race conditions
     const timeoutId = setTimeout(() => {
@@ -211,8 +190,6 @@ export default function AuthProvider({
 
     return () => clearTimeout(timeoutId);
   }, [
-    mounted,
-    storeHydrated,
     authChecked,
     isLoading,
     isAuthenticated,
@@ -224,15 +201,13 @@ export default function AuthProvider({
     publicRoutes,
   ]);
 
-  // Show loading screen during initialization or while store is hydrating
-  if (!mounted || !storeHydrated || !authChecked || isLoading) {
+  // Show loading screen during initialization
+  if (!authChecked || isLoading) {
     return (
       <div className="fixed inset-0 bg-gradient-to-br from-[#17181E] via-[#1F2029] to-[#2A2D3A] flex items-center justify-center z-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto mb-4"></div>
-          <p className="text-white text-lg">
-            {!mounted || !storeHydrated ? 'Loading app...' : 'Checking authentication...'}
-          </p>
+          <p className="text-white text-lg">Checking authentication...</p>
         </div>
       </div>
     );
