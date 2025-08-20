@@ -161,6 +161,8 @@ export default function ShareableLinkPage() {
 
   // Render the appropriate template based on templateType
   const renderTemplate = () => {
+    if (!portfolio) return null;
+    
     switch (portfolio.templateType) {
       case 'template1':
         return <TemplateOne portfolioData={portfolio} isPreview={false} />;
@@ -170,6 +172,11 @@ export default function ShareableLinkPage() {
         return <TemplateOne portfolioData={portfolio} isPreview={false} />;
     }
   };
+
+  // Only render template if we have a valid portfolio
+  if (!portfolio) {
+    return null;
+  }
 
   return (
     <motion.div
