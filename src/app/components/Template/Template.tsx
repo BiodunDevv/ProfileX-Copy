@@ -651,7 +651,7 @@ const Templates = () => {
                         <Link
                           href={
                             hasPortfolio
-                              ? `/p/${userPortfolio.displaySlug}`
+                              ? `/portfolio1/${userPortfolio.displaySlug}`
                               : `/allTemplates/${template.templatePath}`
                           }
                           className="absolute bottom-2 sm:bottom-3 right-2 sm:right-3 bg-white/10 backdrop-blur-md border border-white/20 
@@ -753,7 +753,7 @@ const Templates = () => {
                             <Link
                               href={
                                 hasPortfolio
-                                  ? `/p/${userPortfolio.displaySlug}`
+                                  ? `/portfolio1/${userPortfolio.displaySlug}`
                                   : `/allTemplates/${template.templatePath}`
                               }
                               className="flex-1 bg-slate-800/50 hover:bg-slate-800/70 text-gray-300 hover:text-white px-2 sm:px-4 py-1.5 sm:py-2 rounded-md sm:rounded-lg transition-all duration-300 flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm font-medium border border-slate-700/50 hover:border-slate-600 group"
