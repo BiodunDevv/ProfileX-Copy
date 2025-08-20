@@ -52,15 +52,26 @@ const Contact = ({
     try {
       const customUrl = window.location.pathname.split('/')[2]; 
       
-      // Add portfolio information to the request
+      // Get portfolioId - use prop or extract from URL
+      const currentPortfolioId = portfolioId || customUrl;
+      
+      if (!currentPortfolioId) {
+        throw new Error('Portfolio ID is required to send message');
+      }
+      
+      // Map frontend form data to backend API structure
       const requestData = {
-        ...formData,
-        portfolioCustomUrl: customUrl,
-        recipientEmail: email, 
+        senderName: formData.name,
+        senderEmail: formData.email,
+        senderPhone: '', 
+        senderCompany: '', 
+        subject: formData.subject,
+        message: formData.message,
+        messageType: 'general', // Default message type
       };
       
-      // Send the contact form data to our API
-      const response = await fetch('/api/contact', {
+      // Send the contact form data to the portfolio-specific endpoint
+      const response = await fetch(`/api/portfolio1/${currentPortfolioId}/contact`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -69,9 +80,13 @@ const Contact = ({
       });
       
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.message || 'Failed to send message');
       }
+      
+      // Parse the successful response
+      const result = await response.json();
+      console.log('Message sent successfully:', result);
       
       // Handle success
       setSubmitted(true);
@@ -85,9 +100,9 @@ const Contact = ({
       // Reset submitted state after 5 seconds
       setTimeout(() => setSubmitted(false), 5000);
     } catch (error) {
-      // Show error notification (you might want to add toast notifications)
+      // Show error notification
       console.error('Error sending message:', error);
-      alert('Failed to send message. Please try again.');
+      alert(`Failed to send message: ${error instanceof Error ? error.message : 'Please try again.'}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -107,7 +122,7 @@ const Contact = ({
   };
 
   const inputClasses =
-    "w-full bg-[#111111] text-white border border-[#333333] rounded-lg px-4 py-3 mb-4 focus:outline-none focus:ring-2 focus:ring-[#3F8E00] transition duration-200";
+    "w-full bg-[#111111] text-white placeholder-gray-400 border border-[#333333] rounded-lg px-4 py-3 mb-4 focus:outline-none focus:ring-2 focus:ring-[#3F8E00] transition duration-200";
   const btnBaseClass = `text-white bg-[#3F8E00] hover:bg-[#4BA600] shadow-[0px_8px_30px_0px_rgba(63,142,0,0.3)] transition duration-300 font-medium py-3 px-8 rounded-lg`;
 
   const containerVariants = {
@@ -152,7 +167,7 @@ const Contact = ({
           transition={{ duration: 0.6 }}
         >
           <motion.h2
-            className="text-3xl sm:text-4xl font-bold mb-3 bg-gradient-to-r from-white to-gray-400 text-transparent bg-clip-text"
+            className="text-3xl sm:text-4xl font-bold mb-3 bg-gradient-to-r from-white via-gray-100 to-gray-300 text-transparent bg-clip-text"
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.2 }}
@@ -160,7 +175,7 @@ const Contact = ({
             Get in Touch
           </motion.h2>
           <motion.p
-            className="text-lg text-[#9C9C9C]"
+            className="text-lg text-gray-300"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.7, delay: 0.3 }}
@@ -173,7 +188,7 @@ const Contact = ({
           {/* Contact Info */}
           <motion.div variants={slideInLeft} initial="hidden" animate="visible">
             <motion.h3
-              className="text-2xl font-semibold mb-6 border-b border-[#333333] pb-2"
+              className="text-2xl font-semibold mb-6 border-b border-[#333333] pb-2 text-white"
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
@@ -181,7 +196,7 @@ const Contact = ({
               Contact Information
             </motion.h3>
             <motion.p
-              className="text-[#9C9C9C] mb-8 leading-relaxed"
+              className="text-gray-300 mb-8 leading-relaxed"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.6, delay: 0.4 }}
@@ -217,10 +232,10 @@ const Contact = ({
                   </svg>
                 </motion.div>
                 <div>
-                  <p className="text-sm text-[#9C9C9C]">Email</p>
+                  <p className="text-sm text-gray-400">Email</p>
                   <motion.a
                     href={`mailto:${email}`}
-                    className="text-[#6FC742] hover:underline transition"
+                    className="text-green-400 hover:text-green-300 hover:underline transition"
                     whileHover={{ color: "#8AFF5D" }}
                   >
                     {email}
@@ -248,10 +263,10 @@ const Contact = ({
                     </svg>
                   </motion.div>
                   <div>
-                    <p className="text-sm text-[#9C9C9C]">Phone</p>
+                    <p className="text-sm text-gray-400">Phone</p>
                     <motion.a
                       href={`tel:${phone}`}
-                      className="text-[#6FC742] hover:underline transition"
+                      className="text-green-400 hover:text-green-300 hover:underline transition"
                       whileHover={{ color: "#8AFF5D" }}
                     >
                       {phone}
@@ -314,7 +329,7 @@ const Contact = ({
             className="bg-[#0D0D0D] border border-[#1B1B1B] p-3 rounded-lg shadow-lg"
           >
             <motion.h3
-              className="text-2xl font-semibold mb-6 border-b border-[#333333] pb-2"
+              className="text-2xl font-semibold mb-6 border-b border-[#333333] pb-2 text-white"
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, delay: 0.5 }}

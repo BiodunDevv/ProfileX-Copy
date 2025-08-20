@@ -2,7 +2,6 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { toast } from "react-hot-toast";
 import Navbar from "../components/UI/Navbar";
 import { useAuthStore } from "../../../store/useAuthStore";
 import { motion } from "framer-motion";
@@ -273,23 +272,7 @@ const DashboardPage = () => {
   };
 
   const handleViewPortfolio = (portfolio: Portfolio) => {
-    // Check if portfolio has a slug
-    if (!portfolio.slug || portfolio.slug.trim() === '') {
-      toast.error('This portfolio does not have a custom slug yet. Click "URL" to create one, or we\'ll try using the portfolio ID.', {
-        duration: 6000,
-      });
-      
-      // Fallback: try to open using portfolio ID as slug
-      const portfolioUrl = `${window.location.origin}/portfolio/${portfolio.id}`;
-      console.log('Opening portfolio by ID at:', portfolioUrl);
-      window.open(portfolioUrl, "_blank");
-      return;
-    }
-    
-    // Construct the correct portfolio URL using the slug
-    const portfolioUrl = `${window.location.origin}/portfolio/${portfolio.slug}`;
-    console.log('Opening portfolio at:', portfolioUrl);
-    window.open(portfolioUrl, "_blank");
+    window.open(portfolio.publicUrl, "_blank");
   };
 
   const handlePortfolioInfo = (portfolio: Portfolio) => {
@@ -297,7 +280,7 @@ const DashboardPage = () => {
   };
 
   const handleSlugManagement = (portfolio: Portfolio) => {
-    router.push(`/dashboard/portfolio/slug?id=${portfolio.id}&type=${portfolio.type}`);
+    router.push(`/dashboard/portfolio/slug?type=${portfolio.type}`);
   };
 
   return (
@@ -614,7 +597,7 @@ const DashboardPage = () => {
                             </div>
 
                             {/* Portfolio Stats */}
-                            <div className="flex items-center justify-between text-xs text-gray-400 mb-3">
+                            <div className="flex items-center justify-between text-xs text-gray-400 mb-4">
                               <div className="flex items-center gap-4">
                                 <span className="flex items-center">
                                   <Eye size={10} className="mr-1" />
@@ -625,21 +608,6 @@ const DashboardPage = () => {
                                   {formatDate(portfolio.updatedAt)}
                                 </span>
                               </div>
-                            </div>
-
-                            {/* Slug Status Indicator */}
-                            <div className="mb-4">
-                              {portfolio.slug && portfolio.slug.trim() !== '' ? (
-                                <div className="inline-flex items-center px-2 py-1 bg-green-900/30 border border-green-500/30 rounded text-xs text-green-300">
-                                  <Link2 size={8} className="mr-1" />
-                                  Custom URL: /{portfolio.slug}
-                                </div>
-                              ) : (
-                                <div className="inline-flex items-center px-2 py-1 bg-yellow-900/30 border border-yellow-500/30 rounded text-xs text-yellow-300">
-                                  <Link2 size={8} className="mr-1" />
-                                  No custom URL - using ID
-                                </div>
-                              )}
                             </div>
                           </div>
 
@@ -661,11 +629,10 @@ const DashboardPage = () => {
                             </button>
                             <button
                               onClick={() => handleSlugManagement(portfolio)}
-                              className="bg-green-600/20 hover:bg-green-600/30 text-green-300 py-2 px-3 rounded-lg text-xs font-medium transition-colors flex items-center justify-center gap-1"
+                              className="bg-green-600/20 hover:bg-green-600/30 text-green-300 py-2 px-3 rounded-lg text-xs font-medium transition-colors flex items-center justify-center"
                               title="Manage URL Slug"
                             >
                               <Link2 size={12} />
-                              URL
                             </button>
                             <button
                               onClick={() => handlePortfolioInfo(portfolio)}

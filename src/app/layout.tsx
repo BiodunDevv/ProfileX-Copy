@@ -20,10 +20,10 @@ export const metadata: Metadata = {
   title: "ProfileX - Your Professional Portfolio",
   description: "Create and manage your professional portfolio with ProfileX",
   manifest: "/manifest.json",
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "default",
-    title: "ProfileX",
+  other: {
+    "mobile-web-app-capable": "yes",
+    "apple-mobile-web-app-status-bar-style": "default",
+    "apple-mobile-web-app-title": "ProfileX",
   },
   formatDetection: {
     telephone: false,
@@ -58,9 +58,10 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="ProfileX" />
+        <link rel="preload" href="/next.svg" as="image" />
         <link rel="manifest" href="/manifest.json" />
         <link rel="icon" href="/next.svg" />
         <link rel="apple-touch-icon" href="/next.svg" />
