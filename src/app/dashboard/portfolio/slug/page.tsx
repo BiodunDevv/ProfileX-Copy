@@ -300,17 +300,10 @@ export default function SlugManagementPage() {
     const urlParts = backendUrl.split('/');
     const slug = urlParts[urlParts.length - 1];
     
-    // Determine if it's a custom slug (p/) or default slug (portfolio1/)
-    const isCustomSlug = backendUrl.includes('/p/');
-    
-    // Build frontend URL
+    // Build frontend URL - use /portfolio1/ for both default and custom slugs
     const frontendBase = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
     
-    if (isCustomSlug) {
-      return `${frontendBase}/p/${slug}`;
-    } else {
-      return `${frontendBase}/p/${slug}`; // Use /p/ for both custom and default slugs
-    }
+    return `${frontendBase}/portfolio1/${slug}`;
   };
 
   const copyToClipboard = (text: string) => {
