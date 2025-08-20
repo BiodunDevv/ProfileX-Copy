@@ -292,6 +292,27 @@ export default function SlugManagementPage() {
     }
   };
 
+  // Convert backend URLs to frontend URLs
+  const getFrontendUrl = (backendUrl: string) => {
+    if (!backendUrl) return '';
+    
+    // Extract the slug from the backend URL
+    const urlParts = backendUrl.split('/');
+    const slug = urlParts[urlParts.length - 1];
+    
+    // Determine if it's a custom slug (p/) or default slug (portfolio1/)
+    const isCustomSlug = backendUrl.includes('/p/');
+    
+    // Build frontend URL
+    const frontendBase = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
+    
+    if (isCustomSlug) {
+      return `${frontendBase}/p/${slug}`;
+    } else {
+      return `${frontendBase}/p/${slug}`; // Use /p/ for both custom and default slugs
+    }
+  };
+
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     toast.success('URL copied to clipboard!');
@@ -578,14 +599,14 @@ export default function SlugManagementPage() {
                             </span>
                           </div>
                           <code className="text-sm font-mono break-all text-blue-800 dark:text-blue-200">
-                            {slugInfo.links.defaultUrl}
+                            {getFrontendUrl(slugInfo.links.defaultUrl)}
                           </code>
                         </div>
                         <div className="flex gap-2 ml-4">
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => copyToClipboard(slugInfo.links.defaultUrl)}
+                            onClick={() => copyToClipboard(getFrontendUrl(slugInfo.links.defaultUrl))}
                             className="border-blue-300 text-blue-700 hover:bg-blue-50 dark:border-blue-700 dark:text-blue-300 dark:hover:bg-blue-900/20"
                           >
                             <Copy className="h-4 w-4" />
@@ -593,7 +614,7 @@ export default function SlugManagementPage() {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => window.open(slugInfo.links.defaultUrl, '_blank')}
+                            onClick={() => window.open(getFrontendUrl(slugInfo.links.defaultUrl), '_blank')}
                             className="border-blue-300 text-blue-700 hover:bg-blue-50 dark:border-blue-700 dark:text-blue-300 dark:hover:bg-blue-900/20"
                           >
                             <Eye className="h-4 w-4" />
@@ -616,14 +637,14 @@ export default function SlugManagementPage() {
                               </span>
                             </div>
                             <code className="text-sm font-mono break-all text-green-800 dark:text-green-200">
-                              {slugInfo.links.customUrl}
+                              {getFrontendUrl(slugInfo.links.customUrl)}
                             </code>
                           </div>
                           <div className="flex gap-2 ml-4">
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => copyToClipboard(slugInfo.links.customUrl)}
+                              onClick={() => copyToClipboard(getFrontendUrl(slugInfo.links.customUrl))}
                               className="border-green-300 text-green-700 hover:bg-green-50 dark:border-green-700 dark:text-green-300 dark:hover:bg-green-900/20"
                             >
                               <Copy className="h-4 w-4" />
@@ -631,7 +652,7 @@ export default function SlugManagementPage() {
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => window.open(slugInfo.links.customUrl, '_blank')}
+                              onClick={() => window.open(getFrontendUrl(slugInfo.links.customUrl), '_blank')}
                               className="border-green-300 text-green-700 hover:bg-green-50 dark:border-green-700 dark:text-green-300 dark:hover:bg-green-900/20"
                             >
                               <Eye className="h-4 w-4" />
